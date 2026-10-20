@@ -17,11 +17,11 @@
   --font:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans","Segoe UI","Helvetica Neue",Arial,sans-serif;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
 body{
   font-family:var(--font); color:var(--ink);
   background:linear-gradient(var(--sky-top),var(--sky-bottom) 70%);
-  overflow-x:hidden;
+  position:fixed;inset:0;width:100%;
 }
 
 /* ===== 背景：雲、草地 ===== */
@@ -38,7 +38,12 @@ body{
 .hill.back{height:32vh;left:20%;right:-30%;background:var(--grass-dark)}
 
 /* ===== 版面 ===== */
-#app{position:relative;z-index:1;min-height:100%;display:grid;place-items:center;padding:20px 16px 28px}
+#app{
+  position:relative;z-index:1;width:100%;height:var(--app-height,100dvh);min-height:0;
+  display:grid;place-items:center;padding:clamp(8px,2vh,20px) clamp(10px,2vw,16px);
+  overflow:hidden;
+}
+.screen{transform:scale(var(--screen-scale,1));transform-origin:center center}
 .card{
   width:min(100%,520px); background:var(--paper);
   border-radius:var(--radius); padding:28px 26px 26px;
@@ -102,15 +107,24 @@ input[type=text][aria-invalid=true]{border-color:var(--error)}
 #question{margin:0 0 10px;padding:12px 14px;background:#eef6fb;border-radius:12px;font-size:1.1rem;font-weight:700;line-height:1.45}
 #game-canvas{display:block;width:100%;height:auto;touch-action:none;border-radius:12px;background:#9fd6f2}
 #feedback{min-height:3.4em;margin:10px 0 6px;font-weight:700;line-height:1.5}
+#save-status{min-height:1.35em;margin:0 2px 7px;color:var(--ink-soft);font-size:.82rem;font-weight:700}
+#save-status[data-state="error"]{color:var(--error)}
 .alts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
 .alts button{min-height:48px;padding:8px 12px;font:inherit;font-weight:700;text-align:left;border:2px solid #9bb0bf;border-radius:12px;background:#f3f8fb;color:var(--ink);cursor:pointer}
 .alts button:disabled{opacity:.5;cursor:default}
 #next-btn{margin:6px 0 10px}
+#next-btn[hidden]{display:block;visibility:hidden;pointer-events:none}
 .sub.small{margin:10px 0 8px;font-size:.88rem}
 #damage-overlay{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0;box-shadow:inset 0 0 0 12px rgba(235,0,0,.95),inset 0 0 150px 70px rgba(255,0,0,.8)}
 #damage-overlay.is-active{animation:damage-pulse 650ms ease-out}
 #game-screen.is-hit{animation:hit-shake 400ms}
-@keyframes hit-shake{0%,100%{transform:none}20%{transform:translate(-8px,2px)}40%{transform:translate(7px,-2px)}60%{transform:translate(-5px,1px)}80%{transform:translate(3px,0)}}
+@keyframes hit-shake{
+  0%,100%{transform:scale(var(--screen-scale,1))}
+  20%{transform:scale(var(--screen-scale,1)) translate(-8px,2px)}
+  40%{transform:scale(var(--screen-scale,1)) translate(7px,-2px)}
+  60%{transform:scale(var(--screen-scale,1)) translate(-5px,1px)}
+  80%{transform:scale(var(--screen-scale,1)) translate(3px,0)}
+}
 @keyframes damage-pulse{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){#damage-overlay.is-active{animation:none;opacity:1}#game-screen.is-hit{animation:none}}
 @media (prefers-reduced-motion:no-preference){
@@ -145,6 +159,42 @@ input[type=text]{border:3px solid var(--navy);border-radius:4px;box-shadow:inset
 .alts button{background:#4aa3f0;border:3px solid var(--navy);border-radius:6px;color:var(--navy);font-weight:900;
   box-shadow:inset 0 -5px 0 #2b7fd0,0 3px 0 var(--navy)}
 .alts button:disabled{opacity:.55}
+
+/* ===== 單一視窗適配：手機與電腦都不需要上下捲動 ===== */
+@supports not (height:100dvh){#app{height:100%}}
+@media (max-height:720px){
+  .card{padding:18px 20px 17px}
+  .hero{gap:12px;margin-bottom:14px}
+  .hero svg{width:62px}
+  fieldset{margin-bottom:13px}
+  input[type=text]{min-height:46px;padding:7px 12px}
+  .lang span{min-height:54px;padding:5px 4px}
+  .intro-list{margin-bottom:13px;gap:6px}
+  .intro-list li{line-height:1.35}
+  .btn{min-height:48px;padding:8px 14px}
+  .card.wide{padding:10px}
+  .hud{margin-bottom:7px;padding:6px 9px}
+  #question{margin-bottom:7px;padding:8px 10px;line-height:1.3}
+  #feedback{min-height:2.8em;margin:7px 0 4px;line-height:1.35}
+  #save-status{margin-bottom:4px}
+  #next-btn{margin:4px 0 6px}
+}
+@media (max-width:600px){
+  .card{width:min(100%,480px)}
+  .card.wide{width:100%}
+  .hud{gap:3px 9px;font-size:.78rem}
+  #hearts{font-size:1.15rem;letter-spacing:1px}
+  #hearts svg{width:23px;height:auto}
+  #question{font-size:.9rem}
+  #feedback{font-size:.86rem}
+  #save-status{font-size:.72rem}
+  #next-btn{font-size:1rem}
+}
+@media (orientation:landscape) and (max-height:560px){
+  .card:not(.wide){width:min(92vw,760px)}
+  .intro-list{grid-template-columns:1fr 1fr;column-gap:18px}
+  .intro-list li:last-child{grid-column:1/-1}
+}
 </style>
 </head>
 <body>
@@ -203,6 +253,7 @@ input[type=text]{border:3px solid var(--navy);border-radius:4px;box-shadow:inset
       <li><span class="ico" aria-hidden="true">🪨</span><span data-i18n="intro2"></span></li>
       <li><span class="ico" aria-hidden="true">❤️</span><span data-i18n="intro3"></span></li>
       <li><span class="ico" aria-hidden="true">☁️</span><span data-i18n="intro4"></span></li>
+      <li><span class="ico" aria-hidden="true">📝</span><span data-i18n="intro5"></span></li>
     </ul>
     <button id="start-game" type="button" class="btn" data-i18n="startGame"></button>
     <button id="back-btn" type="button" class="btn ghost" data-i18n="back"></button>
@@ -221,6 +272,7 @@ input[type=text]{border:3px solid var(--navy);border-radius:4px;box-shadow:inset
   <section id="result-screen" class="screen card" hidden aria-live="polite">
     <p id="result-title" class="welcome"></p>
     <p id="result-detail" style="line-height:1.8;margin:0 0 18px"></p>
+    <div id="save-status" role="status" aria-live="polite"></div>
     <button id="again-btn" type="button" class="btn"></button>
   </section>
 </main>
@@ -236,15 +288,17 @@ const I18N = {
     langLabel:"選擇語言", continue:"繼續",
     errEmpty:"請先輸入名稱。", errLong:"名稱太長，請縮短（最多 12 個中文字或 24 個英數字）。",
     welcome:n=>`歡迎，${n}！`,
-    intro1:"每題有一道題目和四個答案。",
+    intro1:"每場從 10 題中隨機抽出 5 題，每題有四個答案。",
     intro2:"拉動彈弓上的石頭，放開後射向你認為正確的答案。",
     intro3:"你有 5 顆愛心。射中錯誤答案會失去 1 顆，愛心用完就挑戰失敗。",
     intro4:"石頭擊中哪一朵雲，就是選擇那個答案。",
+    intro5:"遊戲結束後，只會將你的名稱與最終成績傳送至課程的 Google 試算表。",
     startGame:"開始遊戲", back:"返回修改名稱／語言",
     qn:(a,b)=>`第 ${a}／${b} 題`, score:"分數", hearts:"愛心",
     altLabel:"也可以使用下方按鈕直接選擇答案", aim:"把石頭往下拉（可往左右瞄準），再放開射出。",
     ok:"答對了！", bad:"答錯了，失去一顆愛心。", miss:"沒有擊中答案，請重新瞄準。", right:"正確答案：",
-    next:"下一題", win:"挑戰成功", lose:"挑戰失敗", done:"完成題數", left:"剩餘愛心", again:"再玩一次", retry:"重新挑戰"
+    next:"下一題", win:"挑戰成功", lose:"挑戰失敗", done:"完成題數", left:"剩餘愛心", again:"再玩一次", retry:"重新挑戰",
+    saving:"正在傳送最終成績…", saved:"最終成績已送出", saveFailed:"最終成績傳送失敗，請檢查網路。"
   },
   vi: {
     htmlLang:"vi", docTitle:"Bài 1: Ô nhiễm không khí không biên giới – Chất lượng không khí tại Đài Loan (Trắc nghiệm sau bài học)",
@@ -253,15 +307,17 @@ const I18N = {
     langLabel:"Chọn ngôn ngữ", continue:"Tiếp tục",
     errEmpty:"Vui lòng nhập tên của bạn.", errLong:"Tên quá dài, vui lòng rút ngắn (tối đa 24 ký tự).",
     welcome:n=>`Chào mừng, ${n}!`,
-    intro1:"Mỗi câu hỏi có một đề bài và bốn đáp án.",
+    intro1:"Mỗi lượt chơi chọn ngẫu nhiên 5 trong 10 câu hỏi, mỗi câu có bốn đáp án.",
     intro2:"Kéo viên đá trên ná cao su, thả tay để bắn vào đáp án bạn cho là đúng.",
     intro3:"Bạn có 5 trái tim. Bắn trúng đáp án sai sẽ mất 1 trái tim; hết tim là thua.",
     intro4:"Viên đá trúng đám mây nào thì đó là đáp án bạn chọn.",
+    intro5:"Khi kết thúc trò chơi, chỉ tên và kết quả cuối cùng của bạn được gửi tới Google Trang tính của khóa học.",
     startGame:"Bắt đầu chơi", back:"Quay lại sửa tên / ngôn ngữ",
     qn:(a,b)=>`Câu ${a}/${b}`, score:"Điểm", hearts:"Trái tim",
     altLabel:"Bạn cũng có thể dùng các nút bên dưới để chọn đáp án.", aim:"Kéo viên đá xuống (có thể lệch trái/phải để ngắm) rồi thả tay.",
     ok:"Chính xác!", bad:"Sai rồi, bạn mất 1 trái tim.", miss:"Chưa trúng đáp án nào, hãy ngắm lại.", right:"Đáp án đúng: ",
-    next:"Câu tiếp theo", win:"Thử thách thành công", lose:"Thử thách thất bại", done:"Số câu đã làm", left:"Tim còn lại", again:"Chơi lại", retry:"Thử lại"
+    next:"Câu tiếp theo", win:"Thử thách thành công", lose:"Thử thách thất bại", done:"Số câu đã làm", left:"Tim còn lại", again:"Chơi lại", retry:"Thử lại",
+    saving:"Đang gửi kết quả cuối cùng…", saved:"Đã gửi kết quả cuối cùng", saveFailed:"Không thể gửi kết quả. Vui lòng kiểm tra mạng."
   },
   en: {
     htmlLang:"en", docTitle:"Lesson 1: Air Pollution Knows No Borders – Air Quality in Taiwan (Post-Class Quiz)",
@@ -270,23 +326,64 @@ const I18N = {
     langLabel:"Choose a language", continue:"Continue",
     errEmpty:"Please enter your name.", errLong:"That name is too long. Use up to 24 characters.",
     welcome:n=>`Welcome, ${n}!`,
-    intro1:"Each question has a prompt and four answers.",
+    intro1:"Each game randomly picks 5 of the 10 questions, with four answers per question.",
     intro2:"Pull back the stone on the slingshot, then release it at the answer you think is correct.",
     intro3:"You have 5 hearts. A wrong hit costs 1 heart, and you lose when all hearts are gone.",
     intro4:"Whichever cloud the stone hits is the answer you choose.",
+    intro5:"When the game ends, only your name and final result will be sent to the course Google Sheet.",
     startGame:"Start game", back:"Change name or language",
     qn:(a,b)=>`Question ${a}/${b}`, score:"Score", hearts:"Hearts",
     altLabel:"You can also use the buttons below to choose an answer.", aim:"Pull the stone down (aim left or right), then release.",
     ok:"Correct!", bad:"Wrong answer. You lose 1 heart.", miss:"No answer was hit. Aim again.", right:"Correct answer: ",
-    next:"Next question", win:"Challenge complete", lose:"Challenge failed", done:"Questions answered", left:"Hearts left", again:"Play again", retry:"Try again"
+    next:"Next question", win:"Challenge complete", lose:"Challenge failed", done:"Questions answered", left:"Hearts left", again:"Play again", retry:"Try again",
+    saving:"Sending final result…", saved:"Final result sent", saveFailed:"Could not send the final result. Check your connection."
   }
 };
 
-/* ===== 狀態（名稱只存在記憶體，不寫入任何儲存空間） ===== */
-const state = { lang:"zh", playerName:"" };
+/* ===== 狀態（只在遊戲結束時傳送最終成績） ===== */
+const state = { lang:"zh", playerName:"", sessionId:"" };
+const ANSWER_API_URL = "https://script.google.com/macros/s/AKfycbxSm19r0aIhvGh_kyeFwU5B_-aAigHJl258l2Sx9n1_5lOr9MbRZFRktiDOUsK3_I901A/exec";
 
 const $ = s => document.querySelector(s);
 const nameInput = $("#player-name"), nameError = $("#name-error");
+
+function createSessionId(){
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") return globalThis.crypto.randomUUID();
+  return `game-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+}
+
+function getDeviceType(){
+  if (innerWidth < 600) return "手機";
+  if (innerWidth < 1024) return "平板";
+  return "電腦";
+}
+
+async function saveGameResultToGoogleSheets(result){
+  const status = $("#save-status"), t = T();
+  status.dataset.state = "saving";
+  status.textContent = t.saving;
+  const form = new URLSearchParams({
+    sessionId: result.sessionId,
+    playerName: result.playerName,
+    totalScore: String(result.totalScore),
+    answeredCount: String(result.answeredCount),
+    totalQuestions: String(result.totalQuestions),
+    heartsRemaining: String(result.heartsRemaining),
+    gameResult: result.gameResult,
+    deviceType: getDeviceType()
+  });
+  try {
+    await fetch(ANSWER_API_URL, {method:"POST", mode:"no-cors", body:form, keepalive:true});
+    if(state.sessionId !== result.sessionId) return;
+    status.dataset.state = "saved";
+    status.textContent = T().saved;
+  } catch(error) {
+    console.error("Google Sheets 最終成績傳送失敗", error);
+    if(state.sessionId !== result.sessionId) return;
+    status.dataset.state = "error";
+    status.textContent = T().saveFailed;
+  }
+}
 
 /* 套用語言到所有標記過的元素 */
 function applyLanguage(lang){
@@ -300,6 +397,7 @@ function applyLanguage(lang){
   });
   if (state.playerName) $("#intro-title").textContent = t.welcome(state.playerName);
   if (nameError.dataset.key) nameError.textContent = t[nameError.dataset.key]; // 錯誤提示跟著換語言
+  scheduleScreenFit();
 }
 
 /* 名稱長度：中日韓字元算 2，其他算 1，上限 24（＝12 個中文字） */
@@ -318,8 +416,66 @@ function validatePlayerName(){
   return key ? null : v;
 }
 
+let fitFrame = 0;
+const reservedTextSizes = new WeakMap();
+function reserveTextHeight(element,texts){
+  const style = getComputedStyle(element);
+  const key = [state.lang,element.clientWidth,style.font,style.lineHeight].join("|");
+  if(reservedTextSizes.get(element) === key) return;
+  const probe = element.cloneNode(false);
+  probe.removeAttribute("role");
+  probe.removeAttribute("aria-live");
+  probe.setAttribute("aria-hidden","true");
+  Object.assign(probe.style,{
+    position:"absolute",visibility:"hidden",pointerEvents:"none",
+    width:`${element.clientWidth}px`,height:"auto",minHeight:"0",margin:"0"
+  });
+  element.parentElement.append(probe);
+  let height = 0;
+  for(const text of texts){
+    probe.textContent = text;
+    height = Math.max(height,probe.scrollHeight);
+  }
+  probe.remove();
+  element.style.height = `${height + 2}px`;
+  reservedTextSizes.set(element,key);
+}
+function reserveGameMessages(){
+  const t = T(), messages = [t.aim,t.miss];
+  for(const q of QUESTIONS){
+    messages.push(`✔ ${t.ok}　${tx(q[3])}`);
+    for(const label of "ABCD"){
+      messages.push(`✘ ${t.bad} ${t.right}${label}. ${tx(q[1][q[2]])}　${tx(q[3])}`);
+    }
+  }
+  reserveTextHeight($("#feedback"),messages);
+}
+function scheduleScreenFit(){
+  cancelAnimationFrame(fitFrame);
+  fitFrame = requestAnimationFrame(fitActiveScreen);
+}
+function fitActiveScreen(){
+  const app = $("#app"), screen = document.querySelector(".screen:not([hidden])");
+  if(!app || !screen) return;
+  screen.style.setProperty("--screen-scale","1");
+  if(screen.id === "game-screen") reserveGameMessages();
+  const cs = getComputedStyle(app);
+  const availableWidth = app.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 18;
+  const availableHeight = app.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 22;
+  const naturalWidth = Math.max(screen.offsetWidth,screen.scrollWidth);
+  const naturalHeight = Math.max(screen.offsetHeight,screen.scrollHeight);
+  const scale = Math.max(.35,Math.min(1,availableWidth/naturalWidth,availableHeight/naturalHeight));
+  screen.style.setProperty("--screen-scale",scale.toFixed(4));
+}
+function syncViewportHeight(){
+  const height = globalThis.visualViewport?.height || innerHeight;
+  document.documentElement.style.setProperty("--app-height",`${Math.round(height)}px`);
+  scheduleScreenFit();
+}
+
 function show(id){
   document.querySelectorAll(".screen").forEach(s => { s.hidden = s.id !== id; });
+  scheduleScreenFit();
 }
 
 /* 事件 */
@@ -400,8 +556,16 @@ function cloudImg(st){ if(cloudCache[st]) return cloudCache[st];
 
 /* ===== 遊戲狀態與參數 ===== */
 const cv = $("#game-canvas"), ctx = cv.getContext("2d");
-const MAXQ = QUESTIONS.length, K = 10; // K：拉距→初速度
-const G = {i:0,score:0,hearts:5,W:900,H:520,portrait:false,g:900,anchor:{x:0,y:0},ground:0,maxPull:126,
+const MAXQ = Math.min(5,QUESTIONS.length), K = 10; // K：拉距→初速度
+function pickGameQuestions(){
+  const pool = [...QUESTIONS];
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  return pool.slice(0,MAXQ);
+}
+const G = {i:0,questions:[],score:0,hearts:5,W:900,H:520,portrait:false,g:900,anchor:{x:0,y:0},ground:0,maxPull:126,
   r:16,stone:{x:0,y:0,vx:0,vy:0},drag:false,fly:false,locked:true,busy:false,slots:[],map:[],ended:false,token:0,shake:0};
 const reduced = matchMedia("(prefers-reduced-motion:reduce)");
 
@@ -423,13 +587,14 @@ function resetStone(){ Object.assign(G.stone,{x:G.anchor.x,y:G.anchor.y,vx:0,vy:
 function loadQuestion(i){
   G.i=i; G.token++; G.locked=false; G.busy=false;
   layout(); resetStone();
-  const q=QUESTIONS[i], shift=i%4;
+  const q=G.questions[i], shift=i%4;
   G.map=[0,1,2,3].map(j=>(j+shift)%4);               // 每題輪替正確答案位置
   G.slots.forEach((s,j)=>{ s.st="normal"; s.text=tx(q[1][G.map[j]]); });
   $("#question").textContent = tx(q[0]);
   $("#hud-q").textContent = T().qn(i+1,MAXQ);
   $("#hud-score").textContent = `${T().score} ${G.score}`;
   $("#feedback").textContent = T().aim;
+  $("#next-btn").textContent = T().next;
   $("#next-btn").hidden = true;
 }
 function updateHearts(){
@@ -440,7 +605,7 @@ function updateHearts(){
 /* ===== 答題（Canvas 命中與替代按鈕共用唯一入口） ===== */
 function answer(slot){
   if(G.locked) return; G.locked=true; G.fly=false; G.drag=false;
-  const q=QUESTIONS[G.i], ok=G.map[slot]===q[2], correctSlot=G.map.indexOf(q[2]), t=T();
+  const q=G.questions[G.i], ok=G.map[slot]===q[2], correctSlot=G.map.indexOf(q[2]), t=T();
   G.slots[slot].st = ok?"correct":"wrong"; if(!ok){ G.slots[correctSlot].st="reveal"; G.shake=reduced.matches?0:18; }
   let msg = ok ? `✔ ${t.ok}` : `✘ ${t.bad} ${t.right}${G.slots[correctSlot].label}. ${G.slots[correctSlot].text}`;
   $("#feedback").textContent = `${msg}　${tx(q[3])}`;
@@ -459,6 +624,9 @@ $("#next-btn").addEventListener("click",()=>{
   G.i+1>=MAXQ ? showResult(true) : loadQuestion(G.i+1);
 });
 function showResult(win){
+  if(G.resultSubmitted) return;
+  G.ended=true;
+  G.resultSubmitted=true;
   G.token++; const t=T();
   $("#result-title").textContent = `${state.playerName}　${win?t.win:t.lose}`;
   const answered = win?MAXQ:G.i+1;
@@ -466,6 +634,12 @@ function showResult(win){
   $("#result-detail").style.whiteSpace="pre-line";
   $("#again-btn").textContent = win?t.again:t.retry;
   show("result-screen"); $("#again-btn").focus();
+  reserveTextHeight($("#save-status"),[t.saving,t.saved,t.saveFailed]);
+  saveGameResultToGoogleSheets({
+    sessionId:state.sessionId,playerName:state.playerName,totalScore:G.score,
+    answeredCount:answered,totalQuestions:MAXQ,heartsRemaining:G.hearts,
+    gameResult:win?"成功":"失敗"
+  });
 }
 $("#again-btn").addEventListener("click",()=>{ state.playerName=""; nameInput.value=""; nameError.dataset.key=""; nameError.textContent="";
   G.ended=true; show("name-screen"); nameInput.focus(); });
@@ -542,18 +716,29 @@ let lastT=0;
 function loop(t){ const dt=Math.min(.033,(t-lastT)/1000||0); lastT=t;
   if(!$("#game-screen").hidden){ update(dt); draw(); G.shake*=.92; } requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
-addEventListener("resize",()=>{ if(!$("#game-screen").hidden&&!G.ended){ const old=G.portrait, was=G.locked; layout();
-  QUESTIONS.length&&G.slots.forEach((s,j)=>{ s.text=tx(QUESTIONS[G.i][1][G.map[j]]); }); resetStone(); } });
+addEventListener("resize",()=>{
+  syncViewportHeight();
+  if(!$("#game-screen").hidden&&!G.ended){ layout();
+    G.questions.length&&G.slots.forEach((s,j)=>{ s.text=tx(G.questions[G.i][1][G.map[j]]); }); resetStone(); }
+});
+if(globalThis.visualViewport) visualViewport.addEventListener("resize",syncViewportHeight);
+if(globalThis.ResizeObserver){
+  const screenObserver = new ResizeObserver(scheduleScreenFit);
+  document.querySelectorAll(".screen").forEach(screen=>screenObserver.observe(screen));
+}
 
 /* ===== 開始／返回 ===== */
 function startGame(){
-  Object.assign(G,{score:0,hearts:5,ended:false}); G.token++;
+  Object.assign(G,{questions:pickGameQuestions(),score:0,hearts:5,ended:false,resultSubmitted:false}); G.token++;
+  state.sessionId=createSessionId();
+  $("#save-status").textContent=""; $("#save-status").dataset.state="";
   $("#hud-name").textContent=state.playerName; updateHearts();
   show("game-screen"); loadQuestion(0);
 }
 $("#back-btn").addEventListener("click",()=>{ show("name-screen"); nameInput.focus(); });
 $("#start-game").addEventListener("click",startGame);
 
+syncViewportHeight();
 applyLanguage("zh");
 nameInput.focus();
 </script>
